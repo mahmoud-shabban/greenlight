@@ -16,7 +16,7 @@ type config struct {
 	env  string
 }
 
-type application struct {
+type Application struct {
 	logger *slog.Logger
 	config config
 }
@@ -31,22 +31,18 @@ func main() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	mux := http.NewServeMux()
-
-	app := &application{
+	app := &Application{
 		config: cfg,
 		logger: logger,
 	}
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", app.config.port),
-		Handler:      mux,
+		Handler:      app.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
-
-	mux.HandleFunc("/v1/healthcheck", app.healthChecker)
 
 	logger.Info("starting server", slog.Any("addr", srv.Addr))
 
