@@ -22,19 +22,18 @@ func (app *Application) readIDParam(params httprouter.Params) (int, error) {
 
 }
 
-func (app *Application) writeJson(w http.ResponseWriter, status int, data any, headers http.Header) error {
-	js, err := json.Marshal(data)
+type envelope map[string]any
+
+func (app *Application) writeJson(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
+	js, err := json.MarshalIndent(data, "", "\t")
 
 	if err != nil {
-		// app.logger.Error(err.Error())
-		// http.Error(w, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
 		return err
 	}
 
 	js = append(js, '\n')
 	for k, v := range headers {
 		w.Header()[k] = v
-
 	}
 
 	w.WriteHeader(status)

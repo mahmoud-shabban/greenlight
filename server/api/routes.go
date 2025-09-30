@@ -1,22 +1,21 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-func (app *Application) notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	err := fmt.Sprintf("path %s not found", r.URL.Path)
-	http.Error(w, err, http.StatusNotFound)
+func (app *Application) routerNotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	app.notFoundResponse(w, r)
 }
 
 func (app *Application) routes() *httprouter.Router {
 
 	router := &httprouter.Router{
 		RedirectTrailingSlash: true,
-		NotFound:              http.HandlerFunc(app.notFoundHandler),
+		NotFound:              http.HandlerFunc(app.routerNotFoundHandler),
+		MethodNotAllowed:      http.HandlerFunc(app.methodNotAllowedResponse),
 	}
 
 	router.GET("/v1/healthcheck", app.healthCheckeHandler)
