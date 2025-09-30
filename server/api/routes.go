@@ -13,9 +13,10 @@ func (app *Application) routerNotFoundHandler(w http.ResponseWriter, r *http.Req
 func (app *Application) routes() *httprouter.Router {
 
 	router := &httprouter.Router{
-		RedirectTrailingSlash: true,
-		NotFound:              http.HandlerFunc(app.routerNotFoundHandler),
-		MethodNotAllowed:      http.HandlerFunc(app.methodNotAllowedResponse),
+		RedirectTrailingSlash:  true,
+		HandleMethodNotAllowed: true,
+		NotFound:               http.HandlerFunc(app.routerNotFoundHandler),
+		MethodNotAllowed:       http.HandlerFunc(app.methodNotAllowedResponse),
 	}
 
 	router.GET("/v1/healthcheck", app.healthCheckeHandler)
