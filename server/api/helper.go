@@ -17,8 +17,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (app *Application) readIDParam(params httprouter.Params) (int, error) {
-	id, err := strconv.Atoi(params.ByName("id"))
+func (app *Application) readIDParam(params httprouter.Params) (int64, error) {
+	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
 
 	if err != nil || id <= 0 {
 		// fmt.Fprintf(w, "movie id must be positive integer\n")

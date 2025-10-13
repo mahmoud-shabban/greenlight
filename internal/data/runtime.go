@@ -3,20 +3,16 @@ package data
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 )
 
-var ErrInvalidRuntimeFormat = errors.New("invalid runtime format, correct format (2 hr|min|sec)")
+var ErrInvalidRuntimeFormat = errors.New("invalid runtime format, correct format: duration mins")
 
-type Runtime struct {
-	Duration int64
-	Unit     string
-}
+type Runtime int64
 
 func (rt Runtime) MarshalJSON() ([]byte, error) {
-	jsonVal := fmt.Sprintf("%d %s", rt.Duration, rt.Unit)
+	jsonVal := fmt.Sprintf("%d mins", rt)
 
 	qoutedJsonVal := strconv.Quote(jsonVal)
 	return []byte(qoutedJsonVal), nil
@@ -32,14 +28,15 @@ func (rt *Runtime) UnmarshalJSON(jsonValue []byte) error {
 
 	parts := strings.Split(unqoutedJSONValue, " ")
 
-	if len(parts) != 2 || !slices.Contains([]string{"hr", "min", "sec"}, parts[1]) {
+	if len(parts) != 2 || parts[1] != "mins" {
 		return ErrInvalidRuntimeFormat
 	}
+
 	i, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {
 		return ErrInvalidRuntimeFormat
 	}
 
-	*rt = Runtime{Duration: i, Unit: parts[1]}
+	*rt = Runtime(i)
 	return nil
 }

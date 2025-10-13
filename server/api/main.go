@@ -28,13 +28,13 @@ type Application struct {
 }
 
 func main() {
-	dsn := "postgres://greenlight:pass@127.0.0.1/greenlight?sslmode=disable"
+	// dsn := "postgres://greenlight:pass@127.0.0.1/greenlight?sslmode=disable"
 
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 8080, "server port to listen on")
 	flag.StringVar(&cfg.env, "env", "dev", "server environment")
-	flag.StringVar(&cfg.db.dsn, "dsn", dsn, "postgres database connection string")
+	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("GREENLIGHT_DB_DSN"), "postgres database connection string")
 
 	flag.Parse()
 

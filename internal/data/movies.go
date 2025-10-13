@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -28,8 +29,8 @@ func ValidateMovie(validations *validator.Validator, movie *Movie) {
 	validations.Check(movie.Title != "", "title", "title must not be empty")
 	validations.Check(len(movie.Title) <= 500, "title", "title must be <= 500 bytes long")
 
-	validations.Check(movie.Runtime.Duration != 0, "runtime", "runtime must be provided")
-	validations.Check(movie.Runtime.Duration > 0, "runtime", "runtime must be positive integer")
+	validations.Check(movie.Runtime != 0, "runtime", "runtime must be provided")
+	validations.Check(movie.Runtime > 0, "runtime", "runtime must be positive integer")
 
 	validations.Check(movie.Year != 0, "year", "year must be provided")
 	validations.Check(movie.Year >= 1888, "year", "year must be greater than 1888")
@@ -48,20 +49,99 @@ func (m MovideModel) Insert(movie *Movie) error {
 			RETURNING id, created_at, version
 	`
 
-	args := []any{movie.Title, movie.Year, movie.Runtime.Duration, pq.Array(movie.Genres)}
+	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
 
 	return m.DB.QueryRow(stmt, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
 func (m MovideModel) Get(id int64) (*Movie, error) {
-	return &Movie{}, nil
+
+	if id < 1 {
+		return nil, ErrRecoredNotFound
+	}
+
+	stmt := `
+			SELECT id, created_at, title, year, runtime, genres, version
+			FROM movies
+			WHERE id = $1
+		`
+
+	result := Movie{}
+	err := m.DB.QueryRow(stmt, id).Scan(
+		&result.ID,
+		&result.CreatedAt,
+		&result.Title,
+		&result.Year,
+		&result.Runtime,
+		pq.Array(&result.Genres),
+		&result.Version,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecoredNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &result, nil
 }
 
 func (m MovideModel) Update(movie *Movie) error {
+
+	stmt := `
+		UPDATE movies
+		SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
+		WHERE id = $5 AND version = $6
+		RETURNING version
+	`
+	err := m.DB.QueryRow(
+		stmt,
+		movie.Title,
+		movie.Year,
+		movie.Runtime,
+		pq.Array(movie.Genres),
+		movie.ID,
+		movie.Version,
+	).Scan(&movie.Version)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
+	}
+
 	return nil
+
 }
 
 func (m MovideModel) Delete(id int64) error {
-	return nil
 
+	stmt := `
+		DELETE FROM movies
+		WHERE id = $1
+	`
+
+	result, err := m.DB.Exec(stmt, id)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrRecoredNotFound
+	}
+
+	return nil
 }
