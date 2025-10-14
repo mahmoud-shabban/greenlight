@@ -6,5 +6,13 @@ build: ./server/api/main.go
 run:
 	@./bin/app
 
+up:
+	@docker start db2
+	@echo "Postgres db container started successfully"
+
+down:
+	@docker stop db2 > /dev/null
+	@echo "Postgres db container stoped successfully"
+
 clean:
 	@rm -rf ./bin/*

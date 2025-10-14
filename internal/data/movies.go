@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -67,7 +68,12 @@ func (m MovideModel) Get(id int64) (*Movie, error) {
 		`
 
 	result := Movie{}
-	err := m.DB.QueryRow(stmt, id).Scan(
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	defer cancel()
+	err := m.DB.QueryRowContext(ctx, stmt, id).Scan(
+		// err := m.DB.QueryRow(stmt, id).Scan(
+		// &[]byte{},
 		&result.ID,
 		&result.CreatedAt,
 		&result.Title,
@@ -97,7 +103,13 @@ func (m MovideModel) Update(movie *Movie) error {
 		WHERE id = $5 AND version = $6
 		RETURNING version
 	`
-	err := m.DB.QueryRow(
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	defer cancel()
+	// err := m.DB.QueryRow(
+	err := m.DB.QueryRowContext(
+		ctx,
 		stmt,
 		movie.Title,
 		movie.Year,
@@ -126,8 +138,10 @@ func (m MovideModel) Delete(id int64) error {
 		DELETE FROM movies
 		WHERE id = $1
 	`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
-	result, err := m.DB.Exec(stmt, id)
+	defer cancel()
+	result, err := m.DB.ExecContext(ctx, stmt, id)
 
 	if err != nil {
 		return err
