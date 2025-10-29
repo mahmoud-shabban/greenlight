@@ -11,7 +11,7 @@ up:
 	@echo "Postgres db container started successfully"
 
 down:
-	@docker stop db2 > /dev/null
+	@docker stop db2 > /dev/null 2>&1
 	@echo "Postgres db container stoped successfully"
 
 clean:

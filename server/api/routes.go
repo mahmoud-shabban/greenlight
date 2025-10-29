@@ -21,6 +21,7 @@ func (app *Application) routes() *httprouter.Router {
 
 	router.GET("/v1/healthcheck", app.healthCheckeHandler)
 	router.POST("/v1/movies", app.createMovieHandler)
+	router.GET("/v1/movies", app.listMoviesHandler)
 	router.GET("/v1/movies/:id", app.showMovieHandler)
 	router.PATCH("/v1/movies/:id", app.updateMovieHandler)
 	router.DELETE("/v1/movies/:id", app.deleteMovieHandler)

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -15,7 +16,10 @@ import (
 	// _ "github.com/jackc/pgx/v5"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
+	"github.com/mahmoud-shabban/greenlight/internal/validator"
 )
+
+type envelope map[string]any
 
 func (app *Application) readIDParam(params httprouter.Params) (int64, error) {
 	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
@@ -30,7 +34,6 @@ func (app *Application) readIDParam(params httprouter.Params) (int64, error) {
 
 }
 
-type envelope map[string]any
 
 func (app *Application) writeJson(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
 	js, err := json.MarshalIndent(data, "", "\t")
@@ -117,5 +120,45 @@ func openDB(dsn string) (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
+
+}
+
+func (app *Application) readString(qs url.Values, key string, defaultValue string) string {
+	s := qs.Get(key)
+
+	if s == "" {
+		return defaultValue
+	}
+
+	return s
+}
+
+func (app *Application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+
+	csv := qs.Get(key)
+
+	if csv == "" {
+		return defaultValue
+	}
+
+	return strings.Split(csv, ",")
+}
+
+func (app *Application) readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+
+	s := qs.Get(key)
+
+	if s == "" {
+		return defaultValue
+	}
+
+	i, err := strconv.Atoi(s)
+
+	if err != nil {
+		v.AddError(key, "must be integer")
+		return defaultValue
+	}
+
+	return i
 
 }
