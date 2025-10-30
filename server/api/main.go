@@ -20,6 +20,12 @@ type config struct {
 	db   struct {
 		dsn string
 	}
+
+	limiter struct {
+		rps     float64
+		burst   int
+		enabled bool
+	}
 }
 
 type Application struct {
@@ -36,6 +42,9 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 8080, "server port to listen on")
 	flag.StringVar(&cfg.env, "env", "dev", "server environment")
 	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("GREENLIGHT_DB_DSN"), "postgres database connection string")
+	flag.BoolVar(&cfg.limiter.enabled, "limiter", true, "Enable/Disable rate limitier (default true)")
+	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 4, "Rate limiter maximum requests per second (default 4)")
+	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 6, "Rate Limiter maximum burst ")
 
 	flag.Parse()
 
