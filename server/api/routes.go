@@ -10,9 +10,9 @@ func (app *Application) routerNotFoundHandler(w http.ResponseWriter, r *http.Req
 	app.notFoundResponse(w, r)
 }
 
-func (app *Application) routes() *httprouter.Router {
+func (app *Application) routes() http.Handler {
 
-	router := &httprouter.Router{
+	router := httprouter.Router{
 		RedirectTrailingSlash:  true,
 		HandleMethodNotAllowed: true,
 		NotFound:               http.HandlerFunc(app.routerNotFoundHandler),
@@ -26,6 +26,6 @@ func (app *Application) routes() *httprouter.Router {
 	router.PATCH("/v1/movies/:id", app.updateMovieHandler)
 	router.DELETE("/v1/movies/:id", app.deleteMovieHandler)
 
-	return router
+	return app.recoverPanic(&router)
 
 }
