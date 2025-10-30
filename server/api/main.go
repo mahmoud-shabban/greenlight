@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log/slog"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/mahmoud-shabban/greenlight/internal/data"
+	"github.com/mahmoud-shabban/greenlight/internal/jsonlog"
 )
 
 var version = "1.0.0"
@@ -22,7 +23,7 @@ type config struct {
 }
 
 type Application struct {
-	logger *slog.Logger
+	logger *jsonlog.Logger
 	config config
 	models data.Models
 }
@@ -38,11 +39,12 @@ func main() {
 
 	flag.Parse()
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	// logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 	db, err := openDB(cfg.db.dsn)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.PrintError(err, nil)
 		panic(1)
 	}
 
@@ -60,14 +62,18 @@ func main() {
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
+		ErrorLog:     log.New(logger, "", 0),
 	}
 
-	logger.Info("starting server", slog.Any("addr", srv.Addr))
+	logger.PrintInfo("starting server", map[string]string{
+		"addr": srv.Addr,
+		"env":  cfg.env,
+	})
 
 	err = srv.ListenAndServe()
 
 	if err != nil {
-		logger.Error(err.Error())
+		logger.PrintError(err, nil)
 		panic(1)
 	}
 
