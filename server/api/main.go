@@ -2,11 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"log"
-	"net/http"
 	"os"
-	"time"
 
 	"github.com/mahmoud-shabban/greenlight/internal/data"
 	"github.com/mahmoud-shabban/greenlight/internal/jsonlog"
@@ -59,27 +55,30 @@ func main() {
 
 	defer db.Close()
 
+	logger.PrintInfo("DB connection pool stablished successfully.", nil)
+
 	app := &Application{
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
 	}
 
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", app.config.port),
-		Handler:      app.routes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		ErrorLog:     log.New(logger, "", 0),
-	}
+	err = app.serve()
+	// srv := &http.Server{
+	// 	Addr:         fmt.Sprintf(":%d", app.config.port),
+	// 	Handler:      app.routes(),
+	// 	IdleTimeout:  time.Minute,
+	// 	ReadTimeout:  10 * time.Second,
+	// 	WriteTimeout: 30 * time.Second,
+	// 	ErrorLog:     log.New(logger, "", 0),
+	// }
 
-	logger.PrintInfo("starting server", map[string]string{
-		"addr": srv.Addr,
-		"env":  cfg.env,
-	})
+	// logger.PrintInfo("starting server", map[string]string{
+	// 	"addr": srv.Addr,
+	// 	"env":  cfg.env,
+	// })
 
-	err = srv.ListenAndServe()
+	// err = srv.ListenAndServe()
 
 	if err != nil {
 		logger.PrintError(err, nil)
