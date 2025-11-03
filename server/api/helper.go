@@ -34,7 +34,6 @@ func (app *Application) readIDParam(params httprouter.Params) (int64, error) {
 
 }
 
-
 func (app *Application) writeJson(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
 	js, err := json.MarshalIndent(data, "", "\t")
 
@@ -161,4 +160,19 @@ func (app *Application) readInt(qs url.Values, key string, defaultValue int, v *
 
 	return i
 
+}
+
+func (app *Application) background(fn func()) {
+	app.wg.Add(1)
+	go func() {
+		defer app.wg.Done()
+
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.PrintError(fmt.Errorf("%s", err), nil)
+			}
+		}()
+
+		fn()
+	}()
 }
