@@ -101,10 +101,6 @@ func (app *Application) readJson(w http.ResponseWriter, r *http.Request, dest an
 	return nil
 }
 
-func (app *Application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
-	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
-}
-
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {

@@ -11,6 +11,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+var AnonymousUser = &User{}
+
 type User struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -89,7 +91,9 @@ func ValidateUser(v *validator.Validator, user *User) {
 	}
 
 }
-
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
+}
 func (u *UserModel) Insert(user *User) error {
 	stmt := `
 		INSERT INTO users(name,email, password_hash, activated)
