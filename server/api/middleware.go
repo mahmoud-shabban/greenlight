@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/mahmoud-shabban/greenlight/internal/data"
 	"github.com/mahmoud-shabban/greenlight/internal/validator"
 	"golang.org/x/time/rate"
@@ -145,4 +146,50 @@ func (app *Application) authenticate(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 
 	})
+}
+
+// func (app *Application) requireAuthentication(next httprouter.Handle) httprouter.Handle {
+// 	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+
+// 		user := app.contextGetUser(r)
+
+// 		if user.IsAnonymous() {
+// 			app.authenticationRequiredResponse(w, r)
+// 			return
+// 		}
+
+// 		if !user.Activated {
+// 			app.inactiveAccountResponse(w, r)
+// 			return
+// 		}
+
+// 		next(w, r, params)
+
+// 	})
+// }
+
+func (app *Application) requireAuthenticatedUser(next httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+		user := app.contextGetUser(r)
+		if user.IsAnonymous() {
+			app.authenticationRequiredResponse(w, r)
+			return
+		}
+		next(w, r, params)
+	}
+}
+
+func (app *Application) requiredActivatedUser(next httprouter.Handle) httprouter.Handle {
+
+	fn := func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+		user := app.contextGetUser(r)
+		if !user.Activated {
+			app.inactiveAccountResponse(w, r)
+			return
+		}
+
+		next(w, r, params)
+	}
+
+	return app.requireAuthenticatedUser(fn)
 }

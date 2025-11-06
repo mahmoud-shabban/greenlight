@@ -20,11 +20,12 @@ func (app *Application) routes() http.Handler {
 	}
 
 	router.GET("/v1/healthcheck", app.healthCheckeHandler)
-	router.POST("/v1/movies", app.createMovieHandler)
-	router.GET("/v1/movies", app.listMoviesHandler)
-	router.GET("/v1/movies/:id", app.showMovieHandler)
-	router.PATCH("/v1/movies/:id", app.updateMovieHandler)
-	router.DELETE("/v1/movies/:id", app.deleteMovieHandler)
+
+	router.POST("/v1/movies", app.requiredActivatedUser(app.createMovieHandler))
+	router.GET("/v1/movies", app.requiredActivatedUser(app.listMoviesHandler))
+	router.GET("/v1/movies/:id", app.requiredActivatedUser(app.showMovieHandler))
+	router.PATCH("/v1/movies/:id", app.requiredActivatedUser(app.updateMovieHandler))
+	router.DELETE("/v1/movies/:id", app.requiredActivatedUser(app.deleteMovieHandler))
 	router.POST("/v1/users", app.registerUserHandler)
 	router.PUT("/v1/users/activated", app.activateUserHandler)
 
