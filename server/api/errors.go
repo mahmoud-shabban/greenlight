@@ -59,3 +59,9 @@ func (app *Application) invalidCredentialsResponse(w http.ResponseWriter, r *htt
 func (app *Application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 }
+
+func (app *Application) invalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("WWW-Authenticate", "Bearer")
+	message := "Invalid or missing authentication token"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}

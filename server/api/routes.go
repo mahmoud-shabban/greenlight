@@ -30,5 +30,5 @@ func (app *Application) routes() http.Handler {
 
 	router.POST("/v1/tokens/authentication", app.createAuthenticationTokenHandler)
 
-	return app.recoverPanic(app.rateLimit(&router))
+	return app.recoverPanic(app.rateLimit(app.authenticate(&router)))
 }
