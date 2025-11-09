@@ -8,12 +8,12 @@ run:
 
 up:
 	@docker start db2 > /dev/null 
-	@docker start mailpit
-	@echo "Postgres db container started successfully"
+	@docker start mailpit > /dev/null 
+	@echo "Postgres db & mailpit container started successfully"
 
 down:
 	@docker stop db2 mailpit > /dev/null 2>&1
-	@echo "Postgres db container stoped successfully"
+	@echo "Postgres db & mailpit container stoped successfully"
 
 clean:
 	@rm -rf ./bin/*
