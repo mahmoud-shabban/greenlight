@@ -20,7 +20,10 @@ type config struct {
 	port int
 	env  string
 	db   struct {
-		dsn string
+		dsn          string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  string
 	}
 
 	limiter struct {
@@ -55,6 +58,10 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 8080, "server port to listen on")
 	flag.StringVar(&cfg.env, "env", "dev", "server environment")
 	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("GREENLIGHT_DB_DSN"), "postgres database connection string")
+	// db config
+	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-cons", 25, "PostgreSQL max open connections")
+	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-cons", 25, "PostgreSQL max idle connections")
+	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection idle time")
 	// limiter settings
 	flag.BoolVar(&cfg.limiter.enabled, "limiter", true, "Enable/Disable rate limitier (default true)")
 	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 4, "Rate limiter maximum requests per second (default 4)")
@@ -78,7 +85,7 @@ func main() {
 	// logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
-	db, err := openDB(cfg.db.dsn)
+	db, err := openDB(cfg)
 	if err != nil {
 		logger.PrintError(err, nil)
 		panic(1)
