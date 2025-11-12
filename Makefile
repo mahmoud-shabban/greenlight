@@ -4,7 +4,7 @@ build: ./server/api/main.go
 	@go build -o bin/app  ./server/api/
 
 run:
-	@./bin/app -smtp-username="" -smtp-password="" -smtp-port=1025 -smtp-host=localhost -smtp-sender="Greenlight <hello@mailpit.local>" -cors-trusted-origins="http://greenlight.local:8080 http://api.grenlight.local:8080 http://localhost:8080 http://192.168.0.118"
+	@./bin/app -smtp-username="" -smtp-password="" -limiter=false -smtp-port=1025 -smtp-host=localhost -smtp-sender="Greenlight <hello@mailpit.local>" -cors-trusted-origins="http://greenlight.local:8080 http://api.grenlight.local:8080 http://localhost:8080 http://192.168.0.118 http://localhost:9000 http://192.168.0.134:9000 http://192.168.0.134:8080"
 
 up:
 	@docker start db2 > /dev/null 
