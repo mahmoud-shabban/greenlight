@@ -29,15 +29,19 @@ smtp_sender ?= "Greenlight <hello@mailpit.local>"
 cors_origins ?= "http://greenlight.local:8080 http://api.grenlight.local:8080 http://localhost:8080 http://192.168.0.118 http://localhost:9000 http://192.168.0.134:9000 http://192.168.0.134:8080"
 
 
-current_time = $(shell date --iso-8601=seconds)
 output_dir ?= ./bin
-build_flags ?= -s -X main.buildTime=${current_time}
+git_version = $(shell git describe --always --dirty)
+current_time = $(shell date --iso-8601=seconds)
+
+# -s for the linker to strip DWARF debbuging info and synmbol table from the binary
+# -X to link the current_time value to the buildTime var in main module to burn in the binary build time available with -version
+linker_flags ?= '-s -X main.buildTime=${current_time} -X main.version=${git_version}'
 
 ## api/build: build the app binary and save it to ./bin/app
 .PHONY: api/build
 api/build: ./server/api/main.go
-	@go build -o ${output_dir}/api -ldflags='${build_flags}' ./server/api
-	@GOARCH=amd64 GOOS=linux go build -o ${output_dir}/linux_amd64/api -ldflags='${build_flags}' ./server/api/
+	@go build -o ${output_dir}/api -ldflags=${linker_flags} ./server/api
+	@GOARCH=amd64 GOOS=linux go build -o ${output_dir}/linux_amd64/api -ldflags=${linker_flags} ./server/api/
 
 ## api/run: run the app with the default options
 .PHONY: api/run
