@@ -3,6 +3,7 @@ package main
 import (
 	"expvar"
 	"flag"
+	"fmt"
 	"os"
 	"runtime"
 	"strings"
@@ -80,7 +81,14 @@ func main() {
 
 	})
 
+	displayVersion := flag.Bool("version", false, "Display the version and exit")
+
 	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("Version:\t%s\n", version)
+		os.Exit(0)
+	}
 
 	// logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 

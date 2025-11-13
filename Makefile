@@ -19,18 +19,35 @@ confirm:
 # DEVELOPMENT
 # ====================================================================================== #
 
-.PHONY: all 
-all: api/build api/run 
+greenlight_db_dsn ?= postgres://greenlight:pass@127.0.0.1/greenlight?sslmode=disable
+limiter ?= true
+smtp_username ?=  
+smtp_password ?= 
+smtp_port ?= 1025
+smtp_host ?= localhost
+smtp_sender ?= Greenlight <hello@mailpit.local>
+cors_origins ?= "http://greenlight.local:8080 http://api.grenlight.local:8080 http://localhost:8080 http://192.168.0.118 http://localhost:9000 http://192.168.0.134:9000 http://192.168.0.134:8080"
+
+build_flags ?= -s 
+output_dir ?= ./bin
 
 ## api/build: build the app binary and save it to ./bin/app
 .PHONY: api/build
 api/build: ./server/api/main.go
-	@go build -o bin/app  ./server/api/
+	@GOARCH=amd64 GOOS=linux go build -o ${output_dir}/linux_amd64/api -ldflags=${build_flags} ./server/api/
 
 ## api/run: run the app with the default options
 .PHONY: api/run
 api/run:
-	@./bin/app -db-dsn=${GREENLIGHT_DB_DSN} -smtp-username="" -smtp-password="" -limiter -smtp-port=1025 -smtp-host=localhost -smtp-sender="Greenlight <hello@mailpit.local>" -cors-trusted-origins="http://greenlight.local:8080 http://api.grenlight.local:8080 http://localhost:8080 http://192.168.0.118 http://localhost:9000 http://192.168.0.134:9000 http://192.168.0.134:8080"
+	@go run ./server/api \
+	  -db-dsn=${greenlight_db_dsn} \
+# 	  -limiter=${limiter} \
+	  -smtp-username=${smtp_username} \
+	  -smtp-password=${smtp_password} \
+	  -smtp-port=${smtp_prot} \
+	  -smtp-host=${smtp_host} \
+	  -smtp-sender=${smtp_sender} \
+	  -cors-trusted-origins=${cors_origins}
 
 ## docker/up: starts postgresql and mailpit docker containers
 .PHONY: docker/up
@@ -66,12 +83,9 @@ db/migrations/create: confirm
 # ====================================================================================== #
 # QUALITY CONTROL
 # ====================================================================================== #
-## audit: performing QA tasks on the code [mode tidey, mod verify, fmt, vet, test] staticcheck tool
-.PHONY: audit
-audit:
-	@echo 'Tidying and verifing module dependencies...'
-	go mod tidy
-	go mod verify
+## qa/audit: performing QA tasks on the code [mode tidey, mod verify, fmt, vet, test] staticcheck tool
+.PHONY: qa/audit
+qa/audit: qa/vendor
 	@echo 'Formating code...'
 	go fmt ./...
 	@echo 'Vetting code...'
@@ -80,6 +94,14 @@ audit:
 	@echo "Testing Code..."
 	go test -race -vet=off ./...
 
+## qa/vendor: perform code and module vendoring 
+.PHONY: qa/vendor 
+qa/vendor:
+	@echo 'Tidying and verifing module dependencies...'
+	go mod tidy
+	go mod verify
+# 	@echo 'Vendoring the code...'
+# 	go mod vendor
 ## clean: removes the app binary from ./bin
 .PHONY: clean
 clean:

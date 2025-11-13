@@ -4,7 +4,6 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/mahmoud-shabban/greenlight/internal/data"
 	"github.com/mahmoud-shabban/greenlight/internal/validator"
+	"github.com/tomasen/realip"
 	"golang.org/x/time/rate"
 )
 
@@ -62,12 +62,7 @@ func (app *Application) rateLimit(next http.Handler) http.Handler {
 
 		if app.config.limiter.enabled {
 
-			ip, _, err := net.SplitHostPort(r.RemoteAddr)
-
-			if err != nil {
-				app.serverErrorResponse(w, r, err)
-				return
-			}
+			ip := realip.FromRequest(r)
 
 			mux.Lock()
 
@@ -90,21 +85,6 @@ func (app *Application) rateLimit(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-// global rate limiter
-// func (app *Application) rateLimit(next http.Handler) http.Handler {
-
-// 	limiter := rate.NewLimiter(2, 4)
-
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		if !limiter.Allow() {
-// 			app.rateLimitExceededResponse(w, r)
-// 			return
-// 		}
-
-// 		next.ServeHTTP(w, r)
-// 	})
-// }
 
 func (app *Application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -150,26 +130,6 @@ func (app *Application) authenticate(next http.Handler) http.Handler {
 
 	})
 }
-
-// func (app *Application) requireAuthentication(next httprouter.Handle) httprouter.Handle {
-// 	return httprouter.Handle(func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-
-// 		user := app.contextGetUser(r)
-
-// 		if user.IsAnonymous() {
-// 			app.authenticationRequiredResponse(w, r)
-// 			return
-// 		}
-
-// 		if !user.Activated {
-// 			app.inactiveAccountResponse(w, r)
-// 			return
-// 		}
-
-// 		next(w, r, params)
-
-// 	})
-// }
 
 func (app *Application) requireAuthenticatedUser(next httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
