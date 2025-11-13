@@ -88,7 +88,7 @@ db/migrations/create: confirm
 	@migrate create -dir ./migrations -seq -ext=.sql ${name}
 
 # ====================================================================================== #
-# QUALITY CONTROL
+# QUALITY CONTROL, Hooked to git as a pre-commit hook
 # ====================================================================================== #
 ## qa/audit: performing QA tasks on the code [mode tidey, mod verify, fmt, vet, test] staticcheck tool
 .PHONY: qa/audit
