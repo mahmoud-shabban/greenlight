@@ -1,21 +1,28 @@
 # Include variables from .envrc file
 include .envrc
 
+# ====================================================================================== #
+# HELPERS
+# ====================================================================================== #
 ## help: print this help message
 .PHONY: help
 help:
 	@echo "Usage"
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' | sed -e 's/^/ /'
 
-.PHONY: all 
-all: api/build api/run 
-
 .PHONY: confirm
 confirm:
 	@echo -n 'Are you sure? [y/n] ' && read ans && [ "$${ans:-n}" = "y" ]
 
 
-## api/build: build application and save binary to ./bin/app
+# ====================================================================================== #
+# DEVELOPMENT
+# ====================================================================================== #
+
+.PHONY: all 
+all: api/build api/run 
+
+## api/build: build the app binary and save it to ./bin/app
 .PHONY: api/build
 api/build: ./server/api/main.go
 	@go build -o bin/app  ./server/api/
@@ -55,6 +62,23 @@ db/migrations/goto: confirm
 db/migrations/create: confirm
 	@echo "Creating migrations files ${name}"
 	@migrate create -dir ./migrations -seq -ext=.sql ${name}
+
+# ====================================================================================== #
+# QUALITY CONTROL
+# ====================================================================================== #
+## audit: performing QA tasks on the code [mode tidey, mod verify, fmt, vet, test] staticcheck tool
+.PHONY: audit
+audit:
+	@echo 'Tidying and verifing module dependencies...'
+	go mod tidy
+	go mod verify
+	@echo 'Formating code...'
+	go fmt ./...
+	@echo 'Vetting code...'
+	go vet ./...
+	staticcheck ./...
+	@echo "Testing Code..."
+	go test -race -vet=off ./...
 
 ## clean: removes the app binary from ./bin
 .PHONY: clean
