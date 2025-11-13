@@ -30,12 +30,12 @@ cors_origins ?= "http://greenlight.local:8080 http://api.grenlight.local:8080 ht
 
 
 output_dir ?= ./bin
-git_version = $(shell git describe --always --dirty)
+git_description = $(shell git describe --always --dirty --tags --long)
 current_time = $(shell date --iso-8601=seconds)
 
 # -s for the linker to strip DWARF debbuging info and synmbol table from the binary
 # -X to link the current_time value to the buildTime var in main module to burn in the binary build time available with -version
-linker_flags ?= '-s -X main.buildTime=${current_time} -X main.version=${git_version}'
+linker_flags ?= '-s -X main.buildTime=${current_time} -X main.version=${git_description}'
 
 ## api/build: build the app binary and save it to ./bin/app
 .PHONY: api/build
