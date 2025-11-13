@@ -85,7 +85,7 @@ audit:
 clean:
 	@rm -rf ./bin/*
 
-# Notes
+# Notes for ref
 # var ref ${var_name}
 # pass var values to make using: make <target> var=value or it will search for var name in env variables available to make
 # user lower case var name if it only used in makefile, use upper if not
