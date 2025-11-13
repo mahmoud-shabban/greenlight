@@ -15,7 +15,10 @@ import (
 	"github.com/mahmoud-shabban/greenlight/internal/mailer"
 )
 
-var version = "1.0.0"
+var (
+	version   = "1.0.0"
+	buildTime string
+)
 
 type config struct {
 	port int
@@ -86,7 +89,7 @@ func main() {
 	flag.Parse()
 
 	if *displayVersion {
-		fmt.Printf("Version:\t%s\n", version)
+		fmt.Printf("Version:\t%s\nBuild Time:\t%s\n", version, buildTime)
 		os.Exit(0)
 	}
 

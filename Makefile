@@ -25,26 +25,29 @@ smtp_username ?=
 smtp_password ?= 
 smtp_port ?= 1025
 smtp_host ?= localhost
-smtp_sender ?= Greenlight <hello@mailpit.local>
+smtp_sender ?= "Greenlight <hello@mailpit.local>"
 cors_origins ?= "http://greenlight.local:8080 http://api.grenlight.local:8080 http://localhost:8080 http://192.168.0.118 http://localhost:9000 http://192.168.0.134:9000 http://192.168.0.134:8080"
 
-build_flags ?= -s 
+
+current_time = $(shell date --iso-8601=seconds)
 output_dir ?= ./bin
+build_flags ?= -s -X main.buildTime=${current_time}
 
 ## api/build: build the app binary and save it to ./bin/app
 .PHONY: api/build
 api/build: ./server/api/main.go
-	@GOARCH=amd64 GOOS=linux go build -o ${output_dir}/linux_amd64/api -ldflags=${build_flags} ./server/api/
+	@go build -o ${output_dir}/api -ldflags='${build_flags}' ./server/api
+	@GOARCH=amd64 GOOS=linux go build -o ${output_dir}/linux_amd64/api -ldflags='${build_flags}' ./server/api/
 
 ## api/run: run the app with the default options
 .PHONY: api/run
 api/run:
 	@go run ./server/api \
 	  -db-dsn=${greenlight_db_dsn} \
-# 	  -limiter=${limiter} \
+	  -limiter=${limiter} \
 	  -smtp-username=${smtp_username} \
 	  -smtp-password=${smtp_password} \
-	  -smtp-port=${smtp_prot} \
+	  -smtp-port=${smtp_port} \
 	  -smtp-host=${smtp_host} \
 	  -smtp-sender=${smtp_sender} \
 	  -cors-trusted-origins=${cors_origins}
