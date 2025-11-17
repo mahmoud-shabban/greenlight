@@ -195,6 +195,10 @@ func (app *Application) deleteMovieHandler(w http.ResponseWriter, r *http.Reques
 
 func (app *Application) listMoviesHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 
+	_, span := app.config.tracer.Start(r.Context(), "list_movie_handler")
+	defer span.End()
+
+	// span.SetName("list_movies_handler")
 	var input struct {
 		Tittle string
 		Genres []string

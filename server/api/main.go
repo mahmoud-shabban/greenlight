@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"expvar"
 	"flag"
 	"fmt"
@@ -13,6 +14,9 @@ import (
 	"github.com/mahmoud-shabban/greenlight/internal/data"
 	"github.com/mahmoud-shabban/greenlight/internal/jsonlog"
 	"github.com/mahmoud-shabban/greenlight/internal/mailer"
+	"github.com/mahmoud-shabban/greenlight/internal/tracing"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -45,6 +49,7 @@ type config struct {
 	cors struct {
 		trustedOrigins []string
 	}
+	tracer trace.Tracer
 }
 
 type Application struct {
@@ -118,6 +123,23 @@ func main() {
 	expvar.Publish("timestamp", expvar.Func(func() any {
 		return time.Now().Unix()
 	}))
+
+	// OTEL Tracing Setup Section
+	ctx := context.Background()
+
+	exp, err := tracing.NewTracingExporter(ctx)
+
+	if err != nil {
+		panic(1)
+	}
+
+	tp := tracing.NewTracingProvider(exp, "greenlight_3")
+
+	otel.SetTracerProvider(tp)
+
+	cfg.tracer = otel.Tracer("mainTracer")
+
+	// End of OTEL Section
 
 	app := &Application{
 		config: cfg,

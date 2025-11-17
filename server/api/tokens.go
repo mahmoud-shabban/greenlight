@@ -12,17 +12,22 @@ import (
 
 func (app *Application) createAuthenticationTokenHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 
+	_, span := app.config.tracer.Start(r.Context(), "create_auth_token")
+	defer span.End()
+
 	var input struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 
+	span.AddEvent("reading body")
 	err := app.readJson(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
+	span.AddEvent("validation")
 	v := validator.New()
 
 	data.ValidateEmail(v, input.Email)
@@ -33,6 +38,7 @@ func (app *Application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 		return
 	}
 
+	span.AddEvent("query user")
 	user, err := app.models.Users.GetByEmail(input.Email)
 	if err != nil {
 		switch {
@@ -45,6 +51,7 @@ func (app *Application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 		return
 	}
 
+	span.AddEvent("compare passwords")
 	match, err := user.Password.Matches(input.Password)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -56,12 +63,14 @@ func (app *Application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 		return
 	}
 
+	span.AddEvent("comapreing password hash")
 	token, err := app.models.Tokens.New(user.ID, 24*time.Hour, data.ScopeAuthentication)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 
+	span.AddEvent("sending response")
 	err = app.writeJson(w, http.StatusCreated, envelope{"authentication_token": token}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)

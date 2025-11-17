@@ -20,7 +20,7 @@ confirm:
 # ====================================================================================== #
 
 greenlight_db_dsn ?= postgres://greenlight:pass@127.0.0.1/greenlight?sslmode=disable
-limiter ?= true
+limiter ?= false
 smtp_username ?=  
 smtp_password ?= 
 smtp_port ?= 1025
@@ -92,7 +92,7 @@ db/migrations/create: confirm
 # ====================================================================================== #
 ## qa/audit: performing QA tasks on the code [mode tidey, mod verify, fmt, vet, test] staticcheck tool
 .PHONY: qa/audit
-qa/audit: qa/vendor
+qa/audit: qa/tidy
 	@echo 'Formating code...'
 	go fmt ./...
 	@echo 'Vetting code...'
@@ -101,9 +101,9 @@ qa/audit: qa/vendor
 	@echo "Testing Code..."
 	go test -race -vet=off ./...
 
-## qa/vendor: perform code and module vendoring 
-.PHONY: qa/vendor 
-qa/vendor:
+## qa/tidy: perform code and module vendoring 
+.PHONY: qa/tidy
+qa/tidy:
 	@echo 'Tidying and verifing module dependencies...'
 	go mod tidy
 	go mod verify
