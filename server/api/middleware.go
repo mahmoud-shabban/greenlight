@@ -229,3 +229,19 @@ func (app *Application) metrics(next http.Handler) http.Handler {
 		totalResponsesSentByStatus.Add(strconv.Itoa(metrics.Code), 1)
 	})
 }
+
+func (app *Application) logRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		message := "recived request"
+		properties := map[string]string{
+			"ip":     r.RemoteAddr,
+			"proto":  r.Proto,
+			"method": r.Method,
+			"uri":    r.URL.RequestURI(),
+		}
+		app.logger.PrintInfo(message, properties)
+
+		next.ServeHTTP(w, r)
+	})
+}

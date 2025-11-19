@@ -61,7 +61,8 @@ api/run:
 docker/up:
 	@docker start db2 > /dev/null 
 	@docker start mailpit > /dev/null 
-	@echo "Postgres db & mailpit container started successfully"
+	@docker start jaeger > /dev/null 
+	@echo "Postgres db & mailpit & jaeger container started successfully"
 
 ## docker/down: stops postgresql and mailpit docker containers
 .PHONY: docker/down

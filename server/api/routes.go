@@ -34,5 +34,5 @@ func (app *Application) routes() http.Handler {
 	router.POST("/v1/tokens/authentication", app.createAuthenticationTokenHandler)
 
 	router.Handler(http.MethodGet, "/debug/vars", expvar.Handler())
-	return app.metrics(app.recoverPanic(app.rateLimit(app.authenticate(app.enableCORS(&router)))))
+	return app.logRequest(app.metrics(app.recoverPanic(app.rateLimit(app.authenticate(app.enableCORS(&router))))))
 }

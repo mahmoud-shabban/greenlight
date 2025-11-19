@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/mahmoud-shabban/greenlight/internal/validator"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -57,13 +59,19 @@ func ValidateTokenPlaintext(v *validator.Validator, tokenPlaintext string) {
 	v.Check(tokenPlaintext != "", "token", "must be provided")
 }
 
-func (m TokenModel) New(userID int64, ttl time.Duration, scope string) (*Token, error) {
+func (m TokenModel) New(ctx context.Context, userID int64, ttl time.Duration, scope string, tracer trace.Tracer) (*Token, error) {
+	// _, span := tracer.Start(ctx, "new auth token")
+	_, span := otel.Tracer("mainTracer").Start(ctx, "new auth token 2")
+	defer span.End()
+
+	span.AddEvent("generating token")
 	token, err := generateToken(userID, ttl, scope)
 
 	if err != nil {
 		return nil, err
 	}
 
+	span.AddEvent("inser token into database")
 	err = m.Insert(token)
 	return token, err
 }

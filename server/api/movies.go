@@ -11,12 +11,17 @@ import (
 )
 
 func (app *Application) createMovieHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	_, span := app.config.tracer.Start(r.Context(), "createMovie")
+	defer span.End()
+
 	var input struct {
 		Title   string       `json:"title"`
 		Year    int64        `json:"year"`
 		Runtime data.Runtime `json:"runtime"`
 		Genres  []string     `json:"genres"`
 	}
+
+	span.AddEvent("read body data")
 	err := app.readJson(w, r, &input)
 
 	if err != nil {
@@ -31,6 +36,7 @@ func (app *Application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		Genres:  input.Genres,
 	}
 
+	span.AddEvent("validating data")
 	validations := validator.New()
 	data.ValidateMovie(validations, &movie)
 	if !validations.Valid() {
@@ -38,6 +44,7 @@ func (app *Application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	span.AddEvent("insert movie data")
 	err = app.models.Movies.Insert(&movie)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -48,6 +55,8 @@ func (app *Application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 
 	headers.Set("Location", fmt.Sprintf("v1/movies/%d", movie.ID))
 	// w.WriteHeader(http.StatusCreated)
+
+	span.AddEvent("sending response json")
 	err = app.writeJson(w, http.StatusCreated, envelope{"movie": input}, headers)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -58,6 +67,9 @@ func (app *Application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 func (app *Application) showMovieHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 
 	// params = httprouter.ParamsFromContext(r.Context())
+
+	_, span := app.config.tracer.Start(r.Context(), "show movie")
+	defer span.End()
 
 	id, err := app.readIDParam(params)
 
@@ -76,6 +88,7 @@ func (app *Application) showMovieHandler(w http.ResponseWriter, r *http.Request,
 	// 	Version:   1,
 	// }
 
+	span.AddEvent("query movie with id")
 	movie, err := app.models.Movies.Get(id)
 	if err != nil {
 		switch {
@@ -88,6 +101,7 @@ func (app *Application) showMovieHandler(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
+	span.AddEvent("sending response")
 	err = app.writeJson(w, http.StatusOK, envelope{"movie": movie}, nil)
 
 	if err != nil {
@@ -97,12 +111,17 @@ func (app *Application) showMovieHandler(w http.ResponseWriter, r *http.Request,
 }
 
 func (app *Application) updateMovieHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+
+	_, span := app.config.tracer.Start(r.Context(), "update movie")
+	defer span.End()
+
 	id, err := app.readIDParam(params)
 	if err != nil {
 		app.notFoundResponse(w, r)
 		return
 	}
 
+	span.AddEvent("query movie with id")
 	// var movie data.Movie
 	movie, err := app.models.Movies.Get(id)
 
@@ -122,6 +141,7 @@ func (app *Application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		Runtime *data.Runtime `json:"runtime"`
 	}{}
 
+	span.AddEvent("read request body")
 	err = app.readJson(w, r, &input)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -143,6 +163,7 @@ func (app *Application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		movie.Runtime = *input.Runtime
 	}
 
+	span.AddEvent("validating movie data")
 	validations := validator.New()
 
 	data.ValidateMovie(validations, movie)
@@ -152,6 +173,7 @@ func (app *Application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	span.AddEvent("update datbase movie data")
 	if err = app.models.Movies.Update(movie); err != nil {
 		switch {
 		case errors.Is(err, data.ErrEditConflict):
@@ -162,18 +184,24 @@ func (app *Application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	span.AddEvent("sending response")
 	if err = app.writeJson(w, http.StatusOK, envelope{"movie": movie}, nil); err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
 }
 
 func (app *Application) deleteMovieHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+
+	_, span := app.config.tracer.Start(r.Context(), "delete movie")
+	defer span.End()
+
 	id, err := app.readIDParam(params)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 
+	span.AddEvent("delete db data")
 	err = app.models.Movies.Delete(id)
 	if err != nil {
 		switch {
@@ -185,6 +213,7 @@ func (app *Application) deleteMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	span.AddEvent("sending response")
 	err = app.writeJson(w, http.StatusOK, envelope{"message": "movie delete successfully"}, nil)
 
 	if err != nil {
@@ -205,6 +234,7 @@ func (app *Application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 		data.Filters
 	}
 
+	span.AddEvent("reading url query string and validating")
 	v := validator.New()
 
 	qs := r.URL.Query()
@@ -224,12 +254,15 @@ func (app *Application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	span.AddEvent("getting all movies")
 	movies, meta, err := app.models.Movies.GetAll(input.Tittle, input.Genres, input.Filters)
 
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
+
+	span.AddEvent("sending response")
 
 	err = app.writeJson(w, http.StatusOK, envelope{"metadata": meta, "movies": movies}, nil)
 

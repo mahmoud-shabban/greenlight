@@ -12,7 +12,7 @@ import (
 
 func (app *Application) createAuthenticationTokenHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 
-	_, span := app.config.tracer.Start(r.Context(), "create_auth_token")
+	ctx, span := app.config.tracer.Start(r.Context(), "create auth token")
 	defer span.End()
 
 	var input struct {
@@ -63,8 +63,8 @@ func (app *Application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 		return
 	}
 
-	span.AddEvent("comapreing password hash")
-	token, err := app.models.Tokens.New(user.ID, 24*time.Hour, data.ScopeAuthentication)
+	span.AddEvent("generating and saving new authentication token")
+	token, err := app.models.Tokens.New(ctx, user.ID, 24*time.Hour, data.ScopeAuthentication, app.config.tracer)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
