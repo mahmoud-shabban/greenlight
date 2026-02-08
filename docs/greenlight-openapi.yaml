@@ -1,0 +1,410 @@
+openapi: '3.0.3'
+info:
+  title: GreenLight Movies API
+  version: '1.0'
+servers:
+  - url: https://api.local.test
+tags:
+  - name: server
+    description: General api server endpoints
+  - name: movie
+    description: Movie operations endpoints
+  - name: user 
+    description: User operations endpoints
+  - name: token
+    description: Activation and authentication token endpoints 
+components:
+  schemas:
+    Metadata:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        page_size: 
+          type: integer
+        first_page:
+          type: integer
+        last_page:
+          type: integer
+        total_records:
+          type: integer
+    MovieInput:
+      type: object
+      properties:
+        title: 
+          type: string
+        year:
+          type: integer
+          format: int64
+        runtime: 
+          type: string
+        genres:
+          type: array
+          items:
+            type: string
+    Movie:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        year:
+          type: integer
+          format: int64
+        runtime:
+          type: integer
+          format: int64
+        genres:
+          type: array
+          items:
+            type: string
+        version: 
+          type: integer
+          format: int64
+    UserInput:
+      type: object
+      properties:
+        name: 
+          type: string 
+        email:
+          type: string
+        password:
+          type: string
+    User: 
+      type: object
+      properties:
+        id: 
+          type: integer
+          format: int64
+        created_at:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        activated:
+          type: boolean
+        version:
+          type: integer
+          format: int
+    Authenticate:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    # Token:
+    #   type: object
+    #   properties:
+    #     token:
+    #       type: string 
+    #     expiry:
+    #       type: string
+    #     scope:
+    #       type: string
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        # data:
+        #   type: object
+    Error:
+      type: object
+      properties:
+        code: 
+          type: string
+        error: 
+          type: string
+      required:
+        - code 
+        - error 
+  requestBodies:
+    Movie: 
+      description: Movie Object to add or update.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MovieInput'
+    User:
+      description: User endpoints request body
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserInput'
+    Authenticate:
+      description: credentials needed to authenticate user and generagte new authentication token
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Authenticate'
+    ActivateUser:
+      description: activate registered user
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+  securitySchemes:
+    token:
+      type: http
+      scheme: bearer
+      bearerFormat: Opaque
+paths:
+  /v1/healthcheck:
+    get:
+      tags:
+        - server
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/movies:
+    get:
+      tags:
+        - movie
+      description: get a list of all movies optionaly filtered by title and/or genres.
+      parameters:
+        - name: title
+          description: movie title
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: genres
+          description: movies genres , separated string to filter with.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          description: page number 
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page_size
+          description: number of movies in one page
+          in: query
+          schema:
+            type: integer
+        - name: sort
+          description: movie property to sort on.
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: resturn all movies list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      metadata:
+                        $ref: '#/components/schemas/Metadata'
+                      movies:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Movie'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - token: []
+    post:
+      tags:
+        - movie
+      requestBody:
+        $ref: '#/components/requestBodies/Movie'
+      responses:
+        '201':
+          description: movie created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object 
+                    properties:
+                      movie:
+                        $ref: '#/components/schemas/MovieInput'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - token: []  
+  /v1/movies/:id:
+    get:
+      tags:
+        - movie 
+      description: get movie by id
+      responses:
+        '200':
+          description: movie with specified id 
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      movie:
+                        $ref: '#/components/schemas/Movie'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - token: []
+    patch:
+      tags:
+        - movie
+      description: update an existing movie
+      responses:
+        '200': 
+          description: movie updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      movie:
+                        $ref: '#/components/schemas/Movie'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - token: []
+    delete:
+      tags:
+        - movie
+      description: delete movie
+      responses:
+        '200':
+          description: deleted movie
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: 'movie delete successfully'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - token: []
+  /v1/users:
+    post:
+      tags:
+        - user
+      description: register new user
+      requestBody:
+        description: register user form data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+        required: true
+      responses:
+        '201':
+          description: user registerd
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
+  /v1/users/activated:
+    put:
+      tags:
+        - user
+      description: activate user
+      requestBody:
+        $ref: '#/components/requestBodies/ActivateUser'
+      responses:
+        '200':
+          description: user activated
+          content:
+            application/json:
+              schema: 
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
+  /v1/tokens/authentication:
+    post:
+      tags:
+        - token
+      description: authenticate user and return auth token.
+      requestBody:
+        $ref: "#/components/requestBodies/Authenticate"
+      responses:
+        '201':
+          description: created new authentication token
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      authentication_token:
+                        type: string

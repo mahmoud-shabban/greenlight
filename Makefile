@@ -67,8 +67,8 @@ docker/up:
 ## docker/down: stops postgresql and mailpit docker containers
 .PHONY: docker/down
 docker/down:
-	@docker stop db2 mailpit > /dev/null 2>&1
-	@echo "Postgres db & mailpit container stoped successfully"
+	@docker stop db2 mailpit jaeger > /dev/null 2>&1
+	@echo "Postgres db & mailpit & jaeger container stoped successfully"
 
 ## db/migrations/up: run db up migration to latest
 .PHONY: db/migrations/up
