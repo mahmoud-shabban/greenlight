@@ -1,6 +1,38 @@
 openapi: '3.0.3'
 info:
   title: GreenLight Movies API
+  description: |-
+    This is a simple Movies api built in golang, it uses httprouter as request router.
+    it is a good project to practice web concepts and web developments.
+
+    it applies the following concepts:
+      - Golang httprouter: instead of the default servmux router
+      - Rate limiting: return 429 code when limit exceeded.
+      - Authentication: token based authentication handeled server side (can be adapted easily to use JWT)
+      - Authorization: role based authorization, roles handeled server side.
+      - Emails for user activation: sends mails with activation tokens and instructions to activate the user.
+      - Mailpit: uses mailpit for email testing
+      - Input validation: implemented custom input validation logic
+      - Error handling: implemented custom error handling logic
+      - Graceful Shutdown 
+      - Logging: server structure logs.
+      - Database:
+          * utilizing postgresql as backend db
+          * using postgresql text search capabilities to search the movies datbase based on user input.
+          * database migrations: implemented database ordered and organized db migrations 
+      - Text search: using postgresql text search capability
+      - Building versiong and code quality control gates.
+      - Metrics: using expvar to expose server metrics and database metrics
+      - Tracing: manual instrumantation with opentelmetry to expose basic tracing spans
+      - Makefile: to automate building process
+      - Git pre-commit hooks: to automate the qa checks before commiting the code to repo
+      - Dockerfile: to build the docker image of the api
+      - Openapi Documentations: documented the api using openapi file. 
+  contact:
+    email: mahmoudshabban300@gmail.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html  
   version: '1.0'
 servers:
   - url: https://api.local.test
@@ -119,6 +151,10 @@ components:
           type: string
         error: 
           type: string
+          # example: "Example error message"
+      example:
+        code: '500' 
+        error: "the server encounterd a problem and could not process your request"
       required:
         - code 
         - error 
@@ -171,6 +207,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
+        '429':
+          description: rate limit exceeded, too many requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '429' 
+                    error: "too many requests"
         default:
           description: unexpected error
           content:
@@ -227,6 +273,36 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/Movie'
+        '401':
+          description: unauthorized
+          content: 
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '401' 
+                    error: "invalid authentication credentials"
+        '422':
+          description: falid input validation
+          content: 
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '422' 
+                    error: "input validation errors"
+        '429':
+          description: rate limit exceeded, too many requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '429' 
+                    error: "too many requests"
         default:
           description: unexpected error
           content:
@@ -252,6 +328,26 @@ paths:
                     properties:
                       movie:
                         $ref: '#/components/schemas/MovieInput'
+        '401':
+          description: unauthorized
+          content: 
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '401' 
+                    error: "invalid authentication credentials"
+        '429':
+          description: rate limit exceeded, too many requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '429' 
+                    error: "too many requests"
         default:
           description: unexpected error
           content:
@@ -277,6 +373,26 @@ paths:
                     properties:
                       movie:
                         $ref: '#/components/schemas/Movie'
+        '401':
+          description: unauthorized
+          content: 
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '401' 
+                    error: "invalid authentication credentials"
+        '429':
+          description: rate limit exceeded, too many requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '429' 
+                    error: "too many requests"
         default:
           description: unexpected error
           content:
@@ -301,6 +417,26 @@ paths:
                     properties:
                       movie:
                         $ref: '#/components/schemas/Movie'
+        '401':
+          description: unauthorized
+          content: 
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '401' 
+                    error: "invalid authentication credentials"
+        '429':
+          description: rate limit exceeded, too many requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '429' 
+                    error: "too many requests"
         default:
           description: unexpected error
           content:
@@ -326,6 +462,26 @@ paths:
                       message:
                         type: string
                         example: 'movie delete successfully'
+        '401':
+          description: unauthorized
+          content: 
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '401' 
+                    error: "invalid authentication credentials"
+        '429':
+          description: rate limit exceeded, too many requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '429' 
+                    error: "too many requests"
         default:
           description: unexpected error
           content:
@@ -358,6 +514,16 @@ paths:
                     properties:
                       user:
                         $ref: '#/components/schemas/User'
+        '429':
+          description: rate limit exceeded, too many requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '429' 
+                    error: "too many requests"
         default:
           description: unexpected error
           content:
@@ -383,6 +549,16 @@ paths:
                     properties:
                       user:
                         $ref: '#/components/schemas/User'
+        '429':
+          description: rate limit exceeded, too many requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '429' 
+                    error: "too many requests"
         default:
           description: unexpected error
           content:
@@ -408,3 +584,19 @@ paths:
                     properties:
                       authentication_token:
                         type: string
+        '429':
+          description: rate limit exceeded, too many requests
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Error'
+                - example:
+                    code: '429' 
+                    error: "too many requests"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
