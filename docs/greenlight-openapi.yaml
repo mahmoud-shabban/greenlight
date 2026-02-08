@@ -21,7 +21,7 @@ info:
           * using postgresql text search capabilities to search the movies datbase based on user input.
           * database migrations: implemented database ordered and organized db migrations 
       - Text search: using postgresql text search capability
-      - Building versiong and code quality control gates.
+      - Building versioning and code quality control gates.
       - Metrics: using expvar to expose server metrics and database metrics
       - Tracing: manual instrumantation with opentelmetry to expose basic tracing spans
       - Makefile: to automate building process
